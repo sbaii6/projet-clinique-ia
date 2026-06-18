@@ -1,3 +1,10 @@
+import os
+import traceback
+from dotenv import load_dotenv
+
+# 1. FORCER LE CHARGEMENT DE LA CLÉ API (GROQ) AVANT TOUT LE RESTE
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -46,7 +53,7 @@ async def start_consult(data: ConsultInput):
     }
     try:
         medical_graph.invoke(initial_input, config=config)
-        # ✅ Lire la question depuis l'interrupt actif
+        # Lire la question depuis l'interrupt actif
         current_question = _get_interrupt_value(config)
         return {
             "status": "consultation_started",
@@ -57,6 +64,9 @@ async def start_consult(data: ConsultInput):
             }
         }
     except Exception as e:
+        # AFFICHE L'ERREUR EXACTE DANS LE TERMINAL POUR DÉBOGUER
+        print("\n--- 🚨 ERREUR LORS DU DÉMARRAGE DE LA CONSULTATION ---")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -68,13 +78,6 @@ async def resume_consult(data: ConsultInput):
     if not current_state:
         raise HTTPException(status_code=404, detail="Session introuvable")
 
-    values = current_state.values
-
-    is_physician_step = (
-        values.get("diagnostic_summary")
-        and not values.get("physician_treatment")
-    )
-
     try:
         medical_graph.invoke(
             Command(resume=data.message),
@@ -85,22 +88,23 @@ async def resume_consult(data: ConsultInput):
         new_state = medical_graph.get_state(config)
         new_values = new_state.values if new_state else {}
 
-        # ✅ Chercher la prochaine question ou la synthèse
+        # Chercher la prochaine question ou la synthèse
         next_question = _get_interrupt_value(config)
         question_count = new_values.get("question_count", 0)
         diagnostic_summary = new_values.get("diagnostic_summary", "")
         interim_care = new_values.get("interim_care", "")
+        physician_treatment = new_values.get("physician_treatment", "")
         final_report = new_values.get("final_report", "")
 
-        # Déterminer le message à afficher
+        # Déterminer le message à afficher (Logique corrigée pour l'Écran 3)
         if final_report:
             last_message = final_report
-        elif diagnostic_summary and not is_physician_step:
+        elif diagnostic_summary and not physician_treatment:
             last_message = diagnostic_summary
         elif next_question:
             last_message = next_question
         else:
-            last_message = ""
+            last_message = "Consultation en cours..."
 
         return {
             "status": "consultation_resumed",
@@ -109,12 +113,15 @@ async def resume_consult(data: ConsultInput):
                 "question_count": question_count,
                 "diagnostic_summary": diagnostic_summary,
                 "interim_care": interim_care,
-                "physician_treatment": new_values.get("physician_treatment", ""),
+                "physician_treatment": physician_treatment,
                 "final_report": final_report,
                 "messages": [{"role": "ai", "content": last_message}] if last_message else []
             }
         }
     except Exception as e:
+        # AFFICHE L'ERREUR EXACTE DANS LE TERMINAL POUR DÉBOGUER
+        print("\n--- 🚨 ERREUR LORS DE LA POURSUITE DE LA CONSULTATION ---")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -132,6 +139,7 @@ async def get_report(thread_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 

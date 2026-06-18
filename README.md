@@ -1,70 +1,22 @@
-# Getting Started with Create React App
+# Système d'Orientation Clinique Intelligent (Multi-Agents)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 📌 Contexte du Projet
+[cite_start]Ce projet consiste en le développement d'une application web d'orientation clinique préliminaire[cite: 7, 8]. [cite_start]Il implémente une architecture multi-agents basée sur **LangGraph** pour modéliser et simuler le parcours de prise en charge d'un patient[cite: 7]. 
+*⚠️ Ce système est un exercice strictement académique et ne fournit pas de diagnostic médical définitif. Toute recommandation intermédiaire doit être validée et signée par un médecin traitant[cite: 11, 12, 13, 14].*
 
-## Available Scripts
+## [cite_start]🛠️ Architecture et Technologies [cite: 3]
+* [cite_start]**Frontend :** React.js (Interface utilisateur style SaaS, Gestion de l'historique via LocalStorage)[cite: 22, 65].
+* [cite_start]**Backend :** FastAPI (Exposition et documentation des routes REST)[cite: 20, 63].
+* [cite_start]**Moteur IA :** LangGraph & LangChain (Orchestration du graphe et gestion de l'état partagé)[cite: 17, 18, 62].
+* [cite_start]**Modèle LLM :** Llama 3.3 (via l'API Groq)[cite: 62].
+* [cite_start]**Outils Externes :** Serveur MCP (Model Context Protocol) pour l'intégration des directives et règles cliniques[cite: 21, 64].
 
-In the project directory, you can run:
+## 🚀 Procédure de Lancement (Windows PowerShell)
 
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### [cite_start]1. Démarrer le Backend (FastAPI) [cite: 63]
+Ouvre un premier terminal PowerShell et exécute les commandes suivantes :
+```bash
+cd backend
+.venv\Scripts\activate
+$env:PYTHONPATH="backend"
+python -m uvicorn app.api:app --reload

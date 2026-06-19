@@ -64,7 +64,6 @@ async def start_consult(data: ConsultInput):
             }
         }
     except Exception as e:
-        # AFFICHE L'ERREUR EXACTE DANS LE TERMINAL POUR DÉBOGUER
         print("\n--- 🚨 ERREUR LORS DU DÉMARRAGE DE LA CONSULTATION ---")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
@@ -79,28 +78,43 @@ async def resume_consult(data: ConsultInput):
         raise HTTPException(status_code=404, detail="Session introuvable")
 
     try:
+        # Détection du rôle (Patient vs Médecin) basé sur l'état d'avancement
+        state_values = current_state.values if current_state else {}
+        diagnostic_summary = state_values.get("diagnostic_summary", "")
+        
+        # Si la synthèse de l'IA existe déjà mais pas la note du médecin, c'est le tour du médecin
+        if diagnostic_summary and not state_values.get("physician_treatment"):
+            resume_content = {
+                "physician_treatment": data.message,
+                "approved": True
+            }
+        else:
+            # Sinon, c'est une réponse textuelle classique du patient (Questions 1 à 5)
+            resume_content = data.message
+
+        # Relancer proprement le graphe via l'état d'interruption actif
         medical_graph.invoke(
-            Command(resume=data.message),
+            Command(resume=resume_content),
             config=config
         )
 
-        # Lire l'état après reprise
+        # Lire l'état mis à jour après la reprise
         new_state = medical_graph.get_state(config)
         new_values = new_state.values if new_state else {}
 
-        # Chercher la prochaine question ou la synthèse
+        # Chercher les nouvelles informations mises à jour
         next_question = _get_interrupt_value(config)
         question_count = new_values.get("question_count", 0)
-        diagnostic_summary = new_values.get("diagnostic_summary", "")
+        updated_summary = new_values.get("diagnostic_summary", "")
         interim_care = new_values.get("interim_care", "")
         physician_treatment = new_values.get("physician_treatment", "")
         final_report = new_values.get("final_report", "")
 
-        # Déterminer le message à afficher (Logique corrigée pour l'Écran 3)
+        # Logique d'aiguillage du message de sortie pour l'interface React
         if final_report:
             last_message = final_report
-        elif diagnostic_summary and not physician_treatment:
-            last_message = diagnostic_summary
+        elif updated_summary and not physician_treatment:
+            last_message = updated_summary
         elif next_question:
             last_message = next_question
         else:
@@ -111,7 +125,7 @@ async def resume_consult(data: ConsultInput):
             "result": {
                 "last_message": last_message,
                 "question_count": question_count,
-                "diagnostic_summary": diagnostic_summary,
+                "diagnostic_summary": updated_summary,
                 "interim_care": interim_care,
                 "physician_treatment": physician_treatment,
                 "final_report": final_report,
@@ -119,7 +133,6 @@ async def resume_consult(data: ConsultInput):
             }
         }
     except Exception as e:
-        # AFFICHE L'ERREUR EXACTE DANS LE TERMINAL POUR DÉBOGUER
         print("\n--- 🚨 ERREUR LORS DE LA POURSUITE DE LA CONSULTATION ---")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
@@ -157,7 +170,6 @@ def _get_interrupt_value(config: dict) -> str | None:
         for task in state.tasks:
             interrupts = getattr(task, "interrupts", [])
             if interrupts:
-                # La valeur de interrupt() = la question générée par le LLM
                 return str(interrupts[0].value)
         return None
     except Exception:

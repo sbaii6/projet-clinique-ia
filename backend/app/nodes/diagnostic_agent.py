@@ -25,21 +25,24 @@ def diagnostic_node(state: MedicalState) -> MedicalState:
     messages = state.get("messages", [])
 
     if count < 5:
-        # Générer la question
-        system_msg = SystemMessage(content=QUESTION_PROMPT.format(count=count + 1))
+        # 1. Préparer le prompt avec le numéro exact de la question en cours
+        current_question_number = count + 1
+        system_msg = SystemMessage(content=QUESTION_PROMPT.format(count=current_question_number))
+        
+        # 2. L'IA génère sa question en lisant l'historique
         ai_response = llm.invoke([system_msg] + messages)
 
-        # ✅ interrupt() reçoit la question en valeur → lisible depuis get_state()
-        # Le return ne s'exécute QU'APRÈS la reprise (quand le patient répond)
+        # 3. PAUSE DYNAMIQUE : On met en attente et on envoie la question au frontend
         human_response = interrupt(ai_response.content)
 
+        # 4. REPRISE : Quand le frontend répond, on sauvegarde l'échange complet et on incrémente
         return {
             "messages": [ai_response, HumanMessage(content=str(human_response))],
-            "question_count": count + 1,
+            "question_count": current_question_number,
         }
 
     else:
-        # Synthèse après 5 questions
+        # Synthèse après les 5 questions
         system_msg = SystemMessage(content=SUMMARY_PROMPT)
         summary = llm.invoke([system_msg] + messages)
 
